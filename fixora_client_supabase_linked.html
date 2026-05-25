@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIXORA - واجهة العميل للخدمات المنزلية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#031d36;--navy2:#062b50;--blue:#096bff;--blue2:#0d7cff;--sky:#eaf4ff;
+  --text:#0b1f3a;--muted:#63738a;--line:#d7e7fb;--card:#fff;--bg:#f7fbff;
+  --green:#16b364;--orange:#f59e0b;--shadow:0 16px 45px rgba(15,50,90,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Tajawal,Arial,sans-serif;background:linear-gradient(180deg,#fff 0,#f5faff 55%,#fff 100%);color:var(--text);min-height:100vh}
+button,input,select,textarea{font-family:inherit}button{cursor:pointer}
+.header{height:82px;background:linear-gradient(90deg,var(--navy),#021425);display:flex;align-items:center;justify-content:space-between;padding:0 42px;color:#fff;box-shadow:0 8px 24px rgba(2,20,37,.18);position:sticky;top:0;z-index:10}
+.logo{display:flex;align-items:center;gap:12px;font-weight:900;font-size:25px}.logo-mark{width:52px;height:52px;border-radius:18px;background:linear-gradient(135deg,#0b6dff,#7cc7ff);display:grid;place-items:center;font-size:30px;box-shadow:0 12px 25px rgba(9,107,255,.35)}.logo small{display:block;font-size:13px;font-weight:700;color:#d8eaff;margin-top:2px}.nav{display:flex;align-items:center;gap:38px}.nav a{color:#edf6ff;text-decoration:none;font-weight:800;font-size:17px;padding:29px 0 25px;border-bottom:3px solid transparent}.nav a.active{color:#1785ff;border-bottom-color:#1785ff}.auth{display:flex;gap:10px}.btn{border:0;border-radius:10px;min-height:46px;padding:0 23px;font-weight:900;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:.2s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:linear-gradient(135deg,#066cff,#0a7cff);color:#fff;box-shadow:0 10px 22px rgba(9,107,255,.25)}.btn-outline{background:transparent;color:#fff;border:1px solid rgba(117,183,255,.55)}
+.container{max-width:1500px;margin:auto;padding:28px 28px 20px}.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,#fff,#f2f8ff);min-height:390px;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;overflow:hidden;padding:22px;box-shadow:var(--shadow)}.hero-visual{position:relative;min-height:340px;display:flex;align-items:center;justify-content:center}.circle{position:absolute;right:0;top:35px;width:120px;height:170px;background:#e4f1ff;border-radius:0 90px 90px 0}.chair{position:relative;z-index:1;width:370px;height:235px;margin-top:70px}.chair:before{content:"";position:absolute;right:82px;bottom:25px;width:205px;height:135px;background:#a9d2ef;border-radius:38px 38px 22px 22px;box-shadow:inset 0 -18px 0 rgba(57,119,164,.12)}.chair:after{content:"";position:absolute;right:105px;bottom:0;width:170px;height:38px;border-radius:50%;background:rgba(70,105,130,.13)}.plant{position:absolute;right:18px;bottom:35px;font-size:105px}.table{position:absolute;right:280px;bottom:52px;width:90px;height:64px;border-radius:50%;border-top:12px solid #d8b68c;border-bottom:0}.hero-text{text-align:center}.hero h1{font-size:38px;line-height:1.45;font-weight:900}.hero h1 span{display:block;color:#0b73ff;font-size:38px}.features{display:flex;justify-content:center;gap:52px;margin-top:38px}.feature{width:92px;text-align:center;font-weight:900;color:#102744}.ficon{width:66px;height:66px;border:1px solid #bcd9ff;border-radius:18px;margin:0 auto 13px;display:grid;place-items:center;color:#086cff;font-size:31px;background:rgba(255,255,255,.7)}.order-box{border:1px solid #cfe2fb;background:rgba(255,255,255,.88);border-radius:18px;padding:22px;box-shadow:0 10px 35px rgba(21,75,130,.07)}.order-box h2{text-align:center;font-size:27px;margin-bottom:8px}.order-box p{text-align:center;color:#536478;font-weight:700;margin-bottom:20px}.form-grid{display:grid;gap:13px}.input-wrap{position:relative}.input-wrap .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#0b73ff;font-size:22px}.input,.select{width:100%;height:51px;border:1px solid #d5e4f5;border-radius:9px;background:#fff;padding:0 45px 0 15px;color:#34445a;font-weight:700;outline:none}.input:focus,.select:focus,textarea:focus{border-color:#0b73ff;box-shadow:0 0 0 4px rgba(11,115,255,.08)}.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}.wide-btn{width:100%;height:58px;font-size:18px;border-radius:9px}.section-title{text-align:center;font-size:32px;font-weight:900;margin:22px 0 12px}.section-title:before,.section-title:after{content:"••";color:#0b73ff;margin:0 18px;letter-spacing:8px}.services{display:grid;grid-template-columns:repeat(7,1fr);gap:28px;margin-top:10px}.service{height:174px;border:1px solid var(--line);border-radius:11px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;box-shadow:0 8px 24px rgba(30,82,130,.04);transition:.2s}.service:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:#9bc6ff}.sicon{font-size:48px;color:#075ee4}.service b{font-size:17px}.mini-btn{height:36px;padding:0 20px;border:1px solid #9ec8ff;background:#fff;color:#086cff;border-radius:7px;font-weight:800}.track-band{margin-top:30px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,#fff,#f0f7ff);min-height:122px;display:grid;grid-template-columns:260px 1fr 1.1fr 260px;align-items:center;gap:18px;padding:0 28px;box-shadow:0 8px 24px rgba(30,82,130,.05)}.map{height:115px;position:relative}.map:before{content:"🗺️";position:absolute;font-size:95px;right:25px;top:8px;opacity:.85}.map:after{content:"📍";position:absolute;font-size:65px;right:135px;top:28px}.track-title h2{font-size:29px}.track-title p{color:#536478;font-weight:700;margin-top:8px}.track-fields{display:grid;grid-template-columns:1fr 1fr;gap:13px}.benefits{margin-top:30px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,#fff,#f5faff);display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:18px 35px}.benefit{display:flex;align-items:center;justify-content:center;gap:17px;font-weight:900}.bicon{width:62px;height:62px;border:1px solid #cfe2fb;border-radius:20px;background:#f4f9ff;display:grid;place-items:center;color:#0b73ff;font-size:33px}.result{display:none;margin-top:24px;border:1px solid var(--line);border-radius:18px;background:#fff;padding:22px;box-shadow:var(--shadow)}.result.open{display:block}.steps{display:grid;grid-template-columns:repeat(5,1fr);align-items:start;margin-top:18px}.step{text-align:center;position:relative}.step:not(:last-child):after{content:"";position:absolute;height:5px;background:#d3dbe6;top:34px;right:50%;width:100%;z-index:0}.step.done:not(:last-child):after{background:var(--green)}.dot{position:relative;z-index:1;margin:auto;width:68px;height:68px;border-radius:50%;background:#d3dae4;display:grid;place-items:center;font-size:28px;color:#42556c}.step.done .dot{background:var(--green);color:#fff}.step.active .dot{background:#096bff;color:#fff;box-shadow:0 0 0 8px rgba(9,107,255,.1)}.step b{display:block;margin-top:12px}.step small{color:#66778c;font-weight:800}.footer{margin-top:36px;background:linear-gradient(90deg,var(--navy),#021425);color:#dcecff;padding:38px 60px 20px}.foot-grid{max-width:1400px;margin:auto;display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr;gap:50px}.footer h3{color:#fff;margin-bottom:13px}.footer p,.footer li{line-height:2;color:#cfe1f6;font-weight:700}.footer ul{list-style:none}.social{display:flex;gap:9px;margin-top:12px}.social span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#0b73ff}.copy{text-align:center;border-top:1px solid rgba(255,255,255,.12);margin-top:22px;padding-top:16px;color:#bcd1e8}.toast{position:fixed;bottom:22px;left:22px;background:#031d36;color:#fff;padding:14px 18px;border-radius:13px;box-shadow:0 15px 35px rgba(0,0,0,.25);display:none;z-index:50;font-weight:800}
+.modal{position:fixed;inset:0;background:rgba(2,20,37,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:18px}.modal.open{display:flex}.modal-card{width:min(520px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.25)}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.close{width:42px;height:42px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:25px}.modal textarea{width:100%;height:90px;border:1px solid #d5e4f5;border-radius:10px;padding:12px;font-weight:700;resize:vertical}
+@media(max-width:1100px){.hero{grid-template-columns:1fr}.services{grid-template-columns:repeat(3,1fr)}.track-band{grid-template-columns:1fr}.benefits{grid-template-columns:1fr 1fr}.header{height:auto;gap:16px;flex-wrap:wrap;padding:16px}.nav{order:3;width:100%;justify-content:center;gap:18px}.foot-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.container{padding:14px}.hero h1,.hero h1 span{font-size:28px}.features,.two,.track-fields,.steps,.benefits,.foot-grid{grid-template-columns:1fr;display:grid}.features{gap:14px}.services{grid-template-columns:1fr}.track-band{padding:16px}.auth{width:100%}.auth .btn{flex:1}.nav{overflow:auto;justify-content:flex-start}.footer{padding:28px 18px}.hero-visual{display:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="header">
+  <div class="logo"><span class="logo-mark">⚙️</span><div>FIXORA<small>للخدمات المنزلية</small></div></div>
+  <nav class="nav"><a class="active" href="#">الرئيسية</a><a href="#order">طلب خدمة</a><a href="#services">خدماتنا</a><a href="#">عن فيكسورا</a><a href="#contact">تواصل معنا</a></nav>
+  <div class="auth"><button class="btn btn-primary">إنشاء حساب 👤+</button><button class="btn btn-outline">تسجيل الدخول 👤</button></div>
+</header>
+<main class="container">
+  <section class="hero" id="order">
+    <div class="hero-visual"><div class="circle"></div><div class="plant">🪴</div><div class="chair"></div><div class="table"></div></div>
+    <div>
+      <div class="hero-text">
+        <h1>خدمات منزلية احترافية <span>في وقتك وبجودة عالية</span></h1>
+        <div class="features">
+          <div class="feature"><div class="ficon">🛡️</div>ضمان على الخدمة</div>
+          <div class="feature"><div class="ficon">🕒</div>سرعة في الاستجابة</div>
+          <div class="feature"><div class="ficon">👷</div>فنيين متخصصين</div>
+          <div class="feature"><div class="ficon">👍</div>جودة عالية وموثوقة</div>
+        </div>
+      </div>
+    </div>
+    <div class="order-box">
+      <h2>أنشئ طلب خدمة منزلية</h2>
+      <p>اختر الخدمة المناسبة وسنصل إليك في أقرب وقت</p>
+      <div class="form-grid">
+        <div class="input-wrap"><span class="ico">⌘</span><select id="service" class="select"><option value="">اختر نوع الخدمة</option><option>صيانة المكيفات</option><option>صيانة الغسالات</option><option>سباكة وكشف تسربات</option><option>كهرباء وتمديدات</option><option>تنظيف منزلي</option><option>دهانات وديكورات</option></select></div>
+        <div class="two"><div class="input-wrap"><span class="ico">📅</span><input id="date" class="input" type="date"></div><div class="input-wrap"><span class="ico">🕒</span><input id="time" class="input" type="time"></div></div>
+        <div class="input-wrap"><span class="ico">📍</span><input id="city" class="input" placeholder="المدينة / الحي"></div>
+        <button class="btn btn-primary wide-btn" onclick="openRequestModal()">إنشاء طلب ＋</button>
+      </div>
+    </div>
+  </section>
+  <h2 class="section-title" id="services">خدماتنا</h2>
+  <section class="services">
+    <div class="service" onclick="pickService('صيانة المكيفات')"><div class="sicon">▭</div><b>صيانة المكيفات</b><button class="mini-btn">اطلب الآن</button></div>
+    <div class="service" onclick="pickService('صيانة الغسالات')"><div class="sicon">▣</div><b>صيانة الغسالات</b><button class="mini-btn">اطلب الآن</button></div>
+    <div class="service" onclick="pickService('سباكة وكشف تسربات')"><div class="sicon">⚯</div><b>سباكة وكشف تسربات</b><button class="mini-btn">اطلب الآن</button></div>
+    <div class="service" onclick="pickService('كهرباء وتمديدات')"><div class="sicon">🔌</div><b>كهرباء وتمديدات</b><button class="mini-btn">اطلب الآن</button></div>
+    <div class="service" onclick="pickService('تنظيف منزلي')"><div class="sicon">🧴</div><b>تنظيف منزلي</b><button class="mini-btn">اطلب الآن</button></div>
+    <div class="service" onclick="pickService('دهانات وديكورات')"><div class="sicon">▭</div><b>دهانات وديكورات</b><button class="mini-btn">اطلب الآن</button></div>
+    <div class="service"><div class="sicon">⌘</div><b>المزيد من الخدمات</b><button class="mini-btn">عرض الكل</button></div>
+  </section>
+  <section class="track-band">
+    <div class="map"></div>
+    <div class="track-title"><h2>تتبع طلبك بسهولة</h2><p>أدخل رقم الطلب ورقم الجوال لمتابعة حالة طلبك</p></div>
+    <div class="track-fields"><div class="input-wrap"><span class="ico">📞</span><input id="trackPhone" class="input" placeholder="05XXXXXXXX"></div><div class="input-wrap"><span class="ico">▣</span><input id="trackId" class="input" placeholder="مثال: 1001"></div></div>
+    <button class="btn btn-primary wide-btn" onclick="trackOrder()">تتبع الطلب 🔍</button>
+  </section>
+  <section class="result" id="resultBox"></section>
+  <section class="benefits">
+    <div class="benefit"><div class="bicon">🎧</div><div>دعم فني متاح<br>على مدار الساعة</div></div>
+    <div class="benefit"><div class="bicon">٪</div><div>أسعار تنافسية<br>وأفضل العروض</div></div>
+    <div class="benefit"><div class="bicon">☆</div><div>تقييمات عملائنا<br>تثق بنا</div></div>
+    <div class="benefit"><div class="bicon">👥</div><div>آلاف العملاء<br>الموثوقين</div></div>
+  </section>
+</main>
+<footer class="footer" id="contact">
+  <div class="foot-grid">
+    <div><div class="logo"><span class="logo-mark">⚙️</span><div>FIXORA<small>للخدمات المنزلية</small></div></div><p>نقدم لك أفضل الخدمات المنزلية بأعلى جودة وبأسعار موثوقة.</p><div class="social"><span>☘</span><span>𝕏</span><span>◎</span><span>f</span></div></div>
+    <div><h3>خدماتنا</h3><ul><li>صيانة المكيفات</li><li>صيانة الغسالات</li><li>سباكة وكشف تسربات</li><li>كهرباء وتمديدات</li><li>تنظيف منزلي</li></ul></div>
+    <div><h3>معلومات</h3><ul><li>عن فيكسورا</li><li>الأسئلة الشائعة</li><li>سياسة الخصوصية</li><li>الشروط والأحكام</li></ul></div>
+    <div><h3>تواصل معنا</h3><p>📞 050 123 4567<br>✉️ info@fixora.com<br>📍 الرياض - المملكة العربية السعودية<br>🕒 السبت - الخميس: 8 ص - 10 م</p></div>
+  </div>
+  <div class="copy">جميع الحقوق محفوظة © 2026 فيكسورا للخدمات المنزلية</div>
+</footer>
+<div class="modal" id="requestModal"><div class="modal-card"><div class="modal-head"><h2>بيانات الطلب</h2><button class="close" onclick="requestModal.classList.remove('open')">×</button></div><div class="form-grid"><input id="clientName" class="input" placeholder="اسم العميل"><input id="clientPhone" class="input" placeholder="رقم الجوال"><input id="address" class="input" placeholder="العنوان بالتفصيل"><textarea id="notes" placeholder="وصف المشكلة أو ملاحظات إضافية"></textarea><button class="btn btn-primary wide-btn" onclick="createOrder()">تأكيد إنشاء الطلب</button></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const KEY='fixora_exact_orders_v1';
+const SUPABASE_URL='ضع_رابط_SUPABASE_PROJECT_URL_هنا';
+const SUPABASE_ANON_KEY='ضع_SUPABASE_ANON_KEY_هنا';
+const SB_READY=SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length>40 && window.supabase;
+const sb=SB_READY?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}}
+function save(v){localStorage.setItem(KEY,JSON.stringify(v));syncOrdersToSupabase(v)}
+function toastMsg(t){toast.textContent=t;toast.style.display='block';setTimeout(()=>toast.style.display='none',2600)}
+function cleanId(v){return String(v||'').replace('#','').trim()}
+function nextId(){let arr=load().map(x=>parseInt(cleanId(x.id))).filter(Boolean);return String((arr.length?Math.max(...arr):1000)+1)}
+function pickService(s){service.value=s;location.hash='order';toastMsg('تم اختيار الخدمة: '+s)}
+function openRequestModal(){if(!service.value){toastMsg('اختر نوع الخدمة أولاً');return}requestModal.classList.add('open')}
+function normalizeOrderForDb(x){return {id:cleanId(x.id),name:x.name||'',phone:x.phone||'',service:x.service||'',city:x.city||'',address:x.address||'',notes:x.notes||'',price:Number(x.price||0),status:x.status||'جديدة',date:x.date||new Date().toISOString().slice(0,10),time:x.time||'',tech_id:x.techId||null,payment_status:x.paymentStatus||null,rating:x.rating||null,rating_note:x.ratingNote||null,before_photos:x.beforePhotos||[],after_photos:x.afterPhotos||[],raw:x,updated_at:new Date().toISOString()}}
+function dbOrderToLocal(r){let x=r.raw||{};return {...x,id:r.id,name:r.name,phone:r.phone,service:r.service,city:r.city,address:r.address,notes:r.notes,price:Number(r.price||0),status:r.status,date:r.date,time:r.time,techId:r.tech_id,paymentStatus:r.payment_status,rating:r.rating,ratingNote:r.rating_note,beforePhotos:r.before_photos||[],afterPhotos:r.after_photos||[]}}
+async function syncOrdersToSupabase(arr){if(!sb||window.__pullingFixora)return;try{await sb.from('orders').upsert((arr||[]).map(normalizeOrderForDb),{onConflict:'id'})}catch(e){console.warn('Supabase sync failed',e);toastMsg('تم الحفظ محليًا - راجع إعدادات Supabase')}}
+async function pullOrdersFromSupabase(){if(!sb)return;try{window.__pullingFixora=true;const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});if(error)throw error;if(data){localStorage.setItem(KEY,JSON.stringify(data.map(dbOrderToLocal)))}}catch(e){console.warn('Supabase pull failed',e)}finally{window.__pullingFixora=false}}
+async function createOrder(){let name=clientName.value.trim(),phone=clientPhone.value.trim();if(!name||!phone){toastMsg('اكتب اسم العميل ورقم الجوال');return}await pullOrdersFromSupabase();let order={id:nextId(),service:service.value,date:date.value||new Date().toISOString().slice(0,10),time:time.value||'10:00',city:city.value||'غير محدد',name,phone,address:address.value,notes:notes.value,status:'جديدة',price:0,created:new Date().toLocaleString('ar-SA')};let arr=load();arr.unshift(order);save(arr);requestModal.classList.remove('open');trackId.value=order.id;trackPhone.value=phone;toastMsg('تم إنشاء الطلب رقم '+order.id+' وسيظهر في لوحة التحكم');await pullOrdersFromSupabase();trackOrder();document.querySelector('.result').scrollIntoView({behavior:'smooth'});}
+function clientStageStatus(st){if(st==='مكتملة'||st==='تم التسليم')return 'تم التسليم'; if(st==='قيد التنفيذ'||st==='قيد الصيانة'||st==='قيد الفحص')return 'قيد الصيانة'; if(st==='متأخرة')return 'قيد الصيانة'; return 'استلام الطلب'}
+function stageIndex(st){return ['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'].indexOf(clientStageStatus(st))}
+async function trackOrder(){await pullOrdersFromSupabase();let id=cleanId(trackId.value),phone=trackPhone.value.trim();let o=load().find(x=>cleanId(x.id)==id&&String(x.phone||'').trim()==phone);if(!o){resultBox.className='result open';resultBox.innerHTML='<h2>لم يتم العثور على الطلب</h2><p style="color:#63738a;font-weight:800;margin-top:8px">تأكد من رقم الطلب ورقم الجوال أو أنشئ طلب جديد.</p>';return}let stages=['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'];let si=stageIndex(o.status);if(si<0)si=0;resultBox.className='result open';resultBox.innerHTML=`<h2 style="font-size:28px">حالة طلبك الحالية</h2><div class="steps">${stages.map((s,i)=>`<div class="step ${i<si?'done':''} ${i==si?'active':''}"><div class="dot">${['📋','🔎','🔧','📦','✓'][i]}</div><b>${s}</b><small>${i<=si?(o.date||'-'):'-'}</small></div>`).join('')}</div><div style="margin-top:25px;border:1px solid #d7e7fb;border-radius:14px;padding:18px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px"><div><b>رقم الطلب</b><p>#${o.id}</p></div><div><b>الخدمة</b><p>${o.service||'-'}</p></div><div><b>التاريخ</b><p>${o.date||'-'}</p></div><div><b>الوقت</b><p>${o.time||'-'}</p></div><div><b>الموقع</b><p>${o.city||'-'}</p></div></div>`;}
+window.addEventListener('load',async()=>{if(sb){await pullOrdersFromSupabase();sb.channel('fixora-client-live').on('postgres_changes',{event:'*',schema:'public',table:'orders'},async()=>{await pullOrdersFromSupabase();if(trackId.value&&trackPhone.value)trackOrder()}).subscribe()}else{console.warn('ضع بيانات Supabase في أعلى الملف لتفعيل الربط الحقيقي')}});
+</script>
+</body>
+</html>
