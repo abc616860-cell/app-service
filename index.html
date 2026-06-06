@@ -50,7 +50,7 @@ button,input,select,textarea{font-family:inherit}button{cursor:pointer}
         <div class="input-wrap"><span class="ico">⌘</span><select id="service" class="select"><option value="">اختر نوع الخدمة</option><option>صيانة المكيفات</option><option>صيانة الغسالات</option><option>سباكة وكشف تسربات</option><option>كهرباء وتمديدات</option><option>تنظيف منزلي</option><option>دهانات وديكورات</option></select></div>
         <div class="input-wrap"><span class="ico">📅</span><input id="date" class="input" type="date"></div>
         <div class="input-wrap"><span class="ico">📍</span><input id="city" class="input" placeholder="المدينة / الحي"></div>
-        <button class="btn btn-primary wide-btn" onclick="openRequestModal()">إنشاء طلب ＋</button>
+        <button class="btn btn-primary wide-btn" onclick="openRequestModal()" id="createOrderBtn" type="button">إنشاء طلب ＋</button>
       </div>
     </div>
   </section>
@@ -92,7 +92,11 @@ button,input,select,textarea{font-family:inherit}button{cursor:pointer}
           <span class="ico">🗺️</span>
           <input class="input" id="googleMapsLocation" type="url" placeholder="رابط اللوكيشن من Google Maps (اختياري)" />
         </div>
-        </div>
+        <div class="input-wrap date-wrap">
+          <span class="ico calendar-trigger" onclick="openPreferredDatePicker()">📅</span>
+          <input class="input" id="preferredDateDisplay" type="text" placeholder="اختر تاريخ الزيارة: يوم / شهر / سنة" readonly onclick="openPreferredDatePicker()" />
+          <input id="preferredDate" type="date" onchange="updatePreferredDateDisplay()" style="position:absolute;opacity:0;width:1px;height:1px;left:0;bottom:0;" />
+        </div><textarea id="notes" placeholder="وصف المشكلة أو ملاحظات إضافية"></textarea><button class="btn btn-primary wide-btn" onclick="createOrder()">تأكيد إنشاء الطلب</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const KEY='technical_fleet_orders_v1';
@@ -253,7 +257,7 @@ async function createOrder(){
       await pullOrdersFromSupabase();
     }else if(result.localOnly){
       toastMsg('تم حفظ الطلب محليًا فقط - ضع بيانات Supabase');
-      alert('تم تسجيل الطلب بنجاح');
+      alert('الطلب اتحفظ على المتصفح فقط. لازم تضع SUPABASE_URL و SUPABASE_ANON_KEY الصحيحين داخل الملف عشان يتسجل على الداتا بيز.');
     }else{
       toastMsg('فشل حفظ قاعدة البيانات - الطلب محفوظ محليًا');
       alert('فشل حفظ الطلب في Supabase:\n'+result.message+'\n\nافتح Console لمعرفة التفاصيل. غالبًا المشكلة RLS أو أسماء أعمدة جدول orders.');
@@ -300,14 +304,28 @@ window.addEventListener('load',async()=>{
 </script>
 
 <script>
+function formatDateInputToArabic(dateValue){
+  if(!dateValue) return "";
+  const parts = dateValue.split("-");
+  return parts[2] + "/" + parts[1] + "/" + parts[0];
+}
 
-
-else{
+function openPreferredDatePicker(){
+  const input = document.getElementById("preferredDate");
+  if(input.showPicker){
+    input.showPicker();
+  }else{
     input.click();
   }
 }
 
+function updatePreferredDateDisplay(){
+  const hiddenInput = document.getElementById("preferredDate");
+  const displayInput = document.getElementById("preferredDateDisplay");
 
+  if(hiddenInput && displayInput){
+    displayInput.value = formatDateInputToArabic(hiddenInput.value);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -315,6 +333,78 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if(hiddenInput){
     hiddenInput.min = new Date().toISOString().split("T")[0];
+  }
+});
+</script>
+
+
+<script>
+const SUPABASE_URL = "https://kbnqrpkexkjzndunnxcq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibnFycGtleGtqem5kdW5ueGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTk5MTIsImV4cCI6MjA5NTI3NTkxMn0.zs1q4hmUDH80j6guhciKJbfi75aB3MAlD6sAvkGcZWU";
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function formatArabicDate(v){
+ if(!v) return "";
+ const p=v.split("-");
+ return p[2]+"/"+p[1]+"/"+p[0];
+}
+
+async function submitOrder(){
+ try{
+   const payload = {
+      customer_name: document.getElementById("customerName")?.value || "",
+      customer_phone: document.getElementById("customerPhone")?.value || "",
+      service_type: document.getElementById("serviceType")?.value || "",
+      city: document.getElementById("city")?.value || "",
+      address: document.getElementById("address")?.value || "",
+      google_maps_location: document.getElementById("googleMapsLocation")?.value || "",
+      preferred_order_date: formatArabicDate(document.getElementById("preferredDate")?.value || ""),
+      order_status: "جديد"
+   };
+
+   if(!payload.customer_name || !payload.customer_phone){
+      alert("اكتب الاسم ورقم الجوال");
+      return;
+   }
+
+   const {data,error} = await supabaseClient
+      .from("orders")
+      .insert([payload])
+      .select();
+
+   if(error){
+      console.error(error);
+      alert("خطأ: " + error.message);
+      return;
+   }
+
+   alert("تم إنشاء الطلب بنجاح");
+   console.log(data);
+ }catch(e){
+   console.error(e);
+   alert("زر إنشاء الطلب اشتغل لكن فيه خطأ: " + e.message);
+ }
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  const btn=document.getElementById("createOrderBtn");
+  if(btn){
+    btn.onclick=submitOrder;
+  }
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  let btn = document.getElementById("createOrderBtn");
+  if(!btn){
+    btn = Array.from(document.querySelectorAll("button")).find(b => b.textContent.includes("إنشاء طلب"));
+  }
+  if(btn){
+    btn.type = "button";
+    btn.onclick = submitOrder;
   }
 });
 </script>
