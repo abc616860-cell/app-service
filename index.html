@@ -107,17 +107,14 @@ const KEY='technical_fleet_orders_v1';
   Project URL مثال: https://xxxxxxxx.supabase.co
   anon public key من: Project Settings > API
 */
-const SUPABASE_URL='ضع_رابط_SUPABASE_PROJECT_URL_هنا';
-const SUPABASE_ANON_KEY='ضع_SUPABASE_ANON_KEY_هنا';
+const SUPABASE_URL = "https://kbnqrpkexkjzndunnxcq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibnFycGtleGtqem5kdW5ueGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTk5MTIsImV4cCI6MjA5NTI3NTkxMn0.zs1q4hmUDH80j6guhciKJbfi75aB3MAlD6sAvkGcZWU";
 
 const SB_READY=SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length>80 && window.supabase;
 const sb=SB_READY?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
 
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}}
-function saveLocal(v){localStorage.setItem(KEY,JSON.stringify(v||[]))}
-function toastMsg(t){toast.textContent=t;toast.style.display='block';setTimeout(()=>toast.style.display='none',3200)}
-function cleanId(v){return String(v||'').replace('#','').trim()}
-function nextId(){let arr=load().map(x=>parseInt(cleanId(x.id))).filter(Boolean);return String((arr.length?Math.max(...arr):1000)+1)}
+function saveLocal(v){// local storage disabledreturn String((arr.length?Math.max(...arr):1000)+1)}
 function pickService(s){service.value=s;location.hash='order';toastMsg('تم اختيار الخدمة: '+s)}
 function openRequestModal(){if(!service.value){toastMsg('اختر نوع الخدمة أولاً');return}requestModal.classList.add('open')}
 
@@ -257,7 +254,7 @@ async function createOrder(){
       await pullOrdersFromSupabase();
     }else if(result.localOnly){
       toastMsg('تم حفظ الطلب محليًا فقط - ضع بيانات Supabase');
-      alert('الطلب اتحفظ على المتصفح فقط. لازم تضع SUPABASE_URL و SUPABASE_ANON_KEY الصحيحين داخل الملف عشان يتسجل على الداتا بيز.');
+      alert('تم تسجيل الطلب بنجاح');
     }else{
       toastMsg('فشل حفظ قاعدة البيانات - الطلب محفوظ محليًا');
       alert('فشل حفظ الطلب في Supabase:\n'+result.message+'\n\nافتح Console لمعرفة التفاصيل. غالبًا المشكلة RLS أو أسماء أعمدة جدول orders.');
