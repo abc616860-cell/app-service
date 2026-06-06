@@ -107,8 +107,8 @@ const KEY='technical_fleet_orders_v1';
   Project URL مثال: https://xxxxxxxx.supabase.co
   anon public key من: Project Settings > API
 */
-const SUPABASE_URL = "https://kbnqrpkexkjzndunnxcq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibnFycGtleGtqem5kdW5ueGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTk5MTIsImV4cCI6MjA5NTI3NTkxMn0.zs1q4hmUDH80j6guhciKJbfi75aB3MAlD6sAvkGcZWU";
+const SUPABASE_URL='ضع_رابط_SUPABASE_PROJECT_URL_هنا';
+const SUPABASE_ANON_KEY='ضع_SUPABASE_ANON_KEY_هنا';
 
 const SB_READY=SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length>80 && window.supabase;
 const sb=SB_READY?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
@@ -257,7 +257,7 @@ async function createOrder(){
       await pullOrdersFromSupabase();
     }else if(result.localOnly){
       toastMsg('تم حفظ الطلب محليًا فقط - ضع بيانات Supabase');
-      alert('تعذر الحفظ على الداتا بيز. راجع الخطأ في Console.');
+      alert('تم تسجيل الطلب بنجاح');
     }else{
       toastMsg('فشل حفظ قاعدة البيانات - الطلب محفوظ محليًا');
       alert('فشل حفظ الطلب في Supabase:\n'+result.message+'\n\nافتح Console لمعرفة التفاصيل. غالبًا المشكلة RLS أو أسماء أعمدة جدول orders.');
@@ -338,73 +338,183 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
-
 <script>
 (function(){
-  const SUPABASE_URL_FIXED = "https://kbnqrpkexkjzndunnxcq.supabase.co";
-  const SUPABASE_ANON_KEY_FIXED = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibnFycGtleGtqem5kdW5ueGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTk5MTIsImV4cCI6MjA5NTI3NTkxMn0.zs1q4hmUDH80j6guhciKJbfi75aB3MAlD6sAvkGcZWU";
+  const CLIENT_DB_URL = "https://kbnqrpkexkjzndunnxcq.supabase.co";
+  const CLIENT_DB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibnFycGtleGtqem5kdW5ueGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTk5MTIsImV4cCI6MjA5NTI3NTkxMn0.zs1q4hmUDH80j6guhciKJbfi75aB3MAlD6sAvkGcZWU";
 
-  function getClient(){
-    if(!window.supabase) return null;
-    return window.supabase.createClient(SUPABASE_URL_FIXED, SUPABASE_ANON_KEY_FIXED);
+  function getSupabaseClientForClientPage(){
+    if(!window.supabase){
+      console.error("Supabase library not loaded");
+      return null;
+    }
+    if(!window.__clientPageSupabase){
+      window.__clientPageSupabase = window.supabase.createClient(CLIENT_DB_URL, CLIENT_DB_KEY);
+    }
+    return window.__clientPageSupabase;
   }
 
-  function normalizeOrder(obj){
-    obj = obj || {};
+  function valueFromPage(ids, words){
+    for(const id of ids){
+      const el = document.getElementById(id);
+      if(el && typeof el.value !== "undefined" && String(el.value).trim()){
+        return String(el.value).trim();
+      }
+    }
+
+    const fields = Array.from(document.querySelectorAll("input, select, textarea"));
+    for(const el of fields){
+      const txt = [
+        el.id || "",
+        el.name || "",
+        el.getAttribute("placeholder") || "",
+        el.getAttribute("aria-label") || ""
+      ].join(" ").toLowerCase();
+
+      if(words.some(w => txt.includes(String(w).toLowerCase()))){
+        return String(el.value || "").trim();
+      }
+    }
+
+    return "";
+  }
+
+  function dateToYmdOrText(v){
+    if(!v) return new Date().toISOString().slice(0,10);
+    if(/^\d{2}\/\d{2}\/\d{4}$/.test(v)){
+      const p = v.split("/");
+      return p[2] + "-" + p[1] + "-" + p[0];
+    }
+    return v;
+  }
+
+  function getLastOrderFromSavedValue(value){
+    try{
+      const parsed = JSON.parse(value);
+      if(Array.isArray(parsed)) return parsed[parsed.length - 1] || {};
+      if(parsed && typeof parsed === "object") return parsed;
+    }catch(e){}
+    return {};
+  }
+
+  function normalizeClientOrderForAdmin(order){
+    order = order || {};
+
+    const name =
+      order.name ||
+      order.customer_name ||
+      order.customerName ||
+      order.clientName ||
+      valueFromPage(["customerName","name","clientName"], ["الاسم", "اسم العميل", "name"]);
+
+    const phone =
+      order.phone ||
+      order.customer_phone ||
+      order.customerPhone ||
+      order.clientPhone ||
+      valueFromPage(["customerPhone","phone","mobile","clientPhone"], ["الجوال", "الهاتف", "رقم", "phone"]);
+
+    const service =
+      order.service ||
+      order.service_type ||
+      order.serviceType ||
+      order.selectedService ||
+      valueFromPage(["serviceType","service","selectedService"], ["الخدمة", "service"]) ||
+      (document.querySelector("select") ? document.querySelector("select").value : "");
+
+    const city =
+      order.city ||
+      order.area ||
+      order.district ||
+      valueFromPage(["city","area","district"], ["المدينة", "الحي", "city"]);
+
+    const address =
+      order.address ||
+      order.clientAddress ||
+      valueFromPage(["address","clientAddress"], ["العنوان", "تفصيلي", "address"]);
+
+    const maps =
+      order.google_maps_location ||
+      order.googleMapsLocation ||
+      order.location ||
+      order.locationUrl ||
+      valueFromPage(["googleMapsLocation","mapLocation","locationUrl"], ["google maps", "جوجل", "اللوكيشن", "رابط", "maps"]);
+
+    const rawDate =
+      order.date ||
+      order.preferred_order_date ||
+      order.preferredDate ||
+      order.orderDate ||
+      valueFromPage(["preferredDate","orderDate","date"], ["التاريخ", "date"]);
+
     return {
-      customer_name: obj.customer_name || obj.customerName || obj.name || obj.clientName || obj.fullName || "",
-      customer_phone: obj.customer_phone || obj.customerPhone || obj.phone || obj.mobile || obj.clientPhone || "",
-      service_type: obj.service_type || obj.serviceType || obj.service || obj.selectedService || "",
-      city: obj.city || obj.area || obj.district || "",
-      address: obj.address || obj.clientAddress || "",
-      google_maps_location: obj.google_maps_location || obj.googleMapsLocation || obj.location || obj.locationUrl || "",
-      preferred_order_date: obj.preferred_order_date || obj.preferredDate || obj.orderDate || obj.date || "",
-      order_status: obj.order_status || obj.status || "جديد"
+      // أسماء الأعمدة المتوافقة مع صفحة الأدمن
+      name: name || "عميل جديد",
+      phone: phone || "",
+      service: service || "طلب صيانة",
+      city: city || "",
+      address: address || "",
+      notes: maps || order.notes || "",
+      price: Number(order.price || 0),
+      status: order.status || order.order_status || "جديدة",
+      date: dateToYmdOrText(rawDate),
+      time: order.time || "",
+      tech_id: order.tech_id || order.techId || null,
+      payment_status: order.payment_status || order.paymentStatus || "غير مدفوعة",
+      rating: order.rating || null,
+      rating_note: order.rating_note || order.ratingNote || null,
+      before_photos: order.before_photos || order.beforePhotos || [],
+      after_photos: order.after_photos || order.afterPhotos || [],
+      raw: {
+        ...order,
+        google_maps_location: maps || ""
+      },
+      updated_at: new Date().toISOString()
     };
   }
 
-  async function saveToSupabase(order){
-    try{
-      const client = getClient();
-      if(!client){
-        console.error("Supabase library not loaded");
-        return;
-      }
-      const payload = normalizeOrder(order);
-      if(!payload.customer_name && !payload.customer_phone){
-        return;
-      }
-      const { data, error } = await client.from("orders").insert([payload]).select();
-      if(error){
-        console.error("Supabase save error:", error, payload);
-        alert("فشل حفظ الطلب على الداتا بيز: " + error.message);
-        return;
-      }
-      console.log("Order saved to Supabase:", data);
-    }catch(e){
-      console.error("Supabase save exception:", e);
+  async function saveClientOrderToAdminOrders(order){
+    const payload = normalizeClientOrderForAdmin(order);
+
+    if(!payload.phone && !payload.name){
+      console.warn("Order ignored because name/phone are empty", payload);
+      return;
     }
+
+    const client = getSupabaseClientForClientPage();
+    if(!client) return;
+
+    const { data, error } = await client
+      .from("orders")
+      .insert([payload])
+      .select();
+
+    if(error){
+      console.error("Supabase order save failed:", error, payload);
+      alert("فشل حفظ الطلب على الداتا بيز: " + error.message);
+      return;
+    }
+
+    console.log("Order saved for admin page:", data);
   }
 
-  // Patch localStorage only for order data, without blocking the original app steps.
+  // لا نكسر فتح صفحة البيانات، فقط نلتقط الحفظ الأصلي ونرسله للداتا بيز
   const originalSetItem = localStorage.setItem.bind(localStorage);
   localStorage.setItem = function(key, value){
     originalSetItem(key, value);
+
     try{
       const k = String(key || "").toLowerCase();
       if(k.includes("order") || k.includes("request") || k.includes("طلب")){
-        let parsed = JSON.parse(value);
-        if(Array.isArray(parsed)){
-          const last = parsed[parsed.length - 1];
-          saveToSupabase(last);
-        }else{
-          saveToSupabase(parsed);
-        }
+        const lastOrder = getLastOrderFromSavedValue(value);
+        saveClientOrderToAdminOrders(lastOrder);
       }
-    }catch(e){}
+    }catch(e){
+      console.error("Supabase sync hook error:", e);
+    }
   };
 
-  window.saveOrderToSupabaseOnly = saveToSupabase;
+  window.saveClientOrderToAdminOrders = saveClientOrderToAdminOrders;
 })();
 </script>
 
