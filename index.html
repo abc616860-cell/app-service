@@ -338,126 +338,73 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
+
 <script>
 (function(){
-  const FIX_SUPABASE_URL = "https://kbnqrpkexkjzndunnxcq.supabase.co";
-  const FIX_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibnFycGtleGtqem5kdW5ueGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTk5MTIsImV4cCI6MjA5NTI3NTkxMn0.zs1q4hmUDH80j6guhciKJbfi75aB3MAlD6sAvkGcZWU";
+  const SUPABASE_URL_FIXED = "https://kbnqrpkexkjzndunnxcq.supabase.co";
+  const SUPABASE_ANON_KEY_FIXED = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibnFycGtleGtqem5kdW5ueGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTk5MTIsImV4cCI6MjA5NTI3NTkxMn0.zs1q4hmUDH80j6guhciKJbfi75aB3MAlD6sAvkGcZWU";
 
-  function getInputValue(ids, placeholderWords){
-    for(const id of ids){
-      const el = document.getElementById(id);
-      if(el && typeof el.value !== "undefined" && String(el.value).trim()) return String(el.value).trim();
-    }
-    const fields = Array.from(document.querySelectorAll("input, select, textarea"));
-    for(const el of fields){
-      const ph = (el.getAttribute("placeholder") || "").toLowerCase();
-      const name = (el.getAttribute("name") || "").toLowerCase();
-      const aria = (el.getAttribute("aria-label") || "").toLowerCase();
-      const id = (el.id || "").toLowerCase();
-      const hay = ph + " " + name + " " + aria + " " + id;
-      if(placeholderWords.some(w => hay.includes(String(w).toLowerCase()))){
-        return String(el.value || "").trim();
-      }
-    }
-    return "";
+  function getClient(){
+    if(!window.supabase) return null;
+    return window.supabase.createClient(SUPABASE_URL_FIXED, SUPABASE_ANON_KEY_FIXED);
   }
 
-  function formatDateValue(v){
-    if(!v) return "";
-    if(/^\d{4}-\d{2}-\d{2}$/.test(v)){
-      const p = v.split("-");
-      return p[2] + "/" + p[1] + "/" + p[0];
-    }
-    return v;
-  }
-
-  function buildOrderPayload(){
-    const serviceSelect = document.getElementById("serviceType") || document.querySelector("select");
-    const dateRaw = getInputValue(["preferredDate","orderDate","date"], ["تاريخ", "date"]);
-
+  function normalizeOrder(obj){
+    obj = obj || {};
     return {
-      customer_name: getInputValue(["customerName","clientName","name","fullName"], ["الاسم", "اسم العميل", "name"]),
-      customer_phone: getInputValue(["customerPhone","clientPhone","phone","mobile"], ["الجوال", "الهاتف", "رقم", "phone", "mobile"]),
-      service_type: getInputValue(["serviceType","service","selectedService"], ["الخدمة", "service"]) || String(serviceSelect?.value || "").trim(),
-      city: getInputValue(["city","district","area"], ["المدينة", "الحي", "city", "area"]),
-      address: getInputValue(["address","clientAddress"], ["العنوان", "تفصيلي", "address"]),
-      google_maps_location: getInputValue(["googleMapsLocation","mapLocation","locationUrl"], ["google maps", "جوجل", "اللوكيشن", "رابط", "maps"]),
-      preferred_order_date: formatDateValue(dateRaw),
-      order_status: "جديد"
+      customer_name: obj.customer_name || obj.customerName || obj.name || obj.clientName || obj.fullName || "",
+      customer_phone: obj.customer_phone || obj.customerPhone || obj.phone || obj.mobile || obj.clientPhone || "",
+      service_type: obj.service_type || obj.serviceType || obj.service || obj.selectedService || "",
+      city: obj.city || obj.area || obj.district || "",
+      address: obj.address || obj.clientAddress || "",
+      google_maps_location: obj.google_maps_location || obj.googleMapsLocation || obj.location || obj.locationUrl || "",
+      preferred_order_date: obj.preferred_order_date || obj.preferredDate || obj.orderDate || obj.date || "",
+      order_status: obj.order_status || obj.status || "جديد"
     };
   }
 
-  async function saveOrderToSupabase(){
+  async function saveToSupabase(order){
     try{
-      const payload = buildOrderPayload();
-
-      if(!payload.customer_name){
-        alert("اكتب الاسم");
-        return false;
+      const client = getClient();
+      if(!client){
+        console.error("Supabase library not loaded");
+        return;
       }
-      if(!payload.customer_phone){
-        alert("اكتب رقم الجوال");
-        return false;
+      const payload = normalizeOrder(order);
+      if(!payload.customer_name && !payload.customer_phone){
+        return;
       }
-
-      if(!window.supabase){
-        alert("مكتبة Supabase لم يتم تحميلها. افتح الملف بإنترنت.");
-        return false;
-      }
-
-      const client = window.supabase.createClient(FIX_SUPABASE_URL, FIX_SUPABASE_ANON_KEY);
-
-      const { data, error } = await client
-        .from("orders")
-        .insert([payload])
-        .select();
-
+      const { data, error } = await client.from("orders").insert([payload]).select();
       if(error){
-        console.error("Supabase insert error:", error, payload);
+        console.error("Supabase save error:", error, payload);
         alert("فشل حفظ الطلب على الداتا بيز: " + error.message);
-        return false;
+        return;
       }
-
       console.log("Order saved to Supabase:", data);
-      alert("تم تسجيل الطلب بنجاح على الداتا بيز");
-      return true;
-
-    }catch(err){
-      console.error("Save order exception:", err);
-      alert("حدث خطأ أثناء حفظ الطلب: " + (err.message || err));
-      return false;
+    }catch(e){
+      console.error("Supabase save exception:", e);
     }
   }
 
-  window.saveOrderToSupabase = saveOrderToSupabase;
+  // Patch localStorage only for order data, without blocking the original app steps.
+  const originalSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value){
+    originalSetItem(key, value);
+    try{
+      const k = String(key || "").toLowerCase();
+      if(k.includes("order") || k.includes("request") || k.includes("طلب")){
+        let parsed = JSON.parse(value);
+        if(Array.isArray(parsed)){
+          const last = parsed[parsed.length - 1];
+          saveToSupabase(last);
+        }else{
+          saveToSupabase(parsed);
+        }
+      }
+    }catch(e){}
+  };
 
-  // Override common old function names only after page scripts are loaded
-  document.addEventListener("DOMContentLoaded", function(){
-    const oldSubmitOrder = window.submitOrder;
-    const oldSaveOrder = window.saveOrder;
-    const oldCreateOrder = window.createOrder;
-
-    window.submitOrder = async function(){
-      return await saveOrderToSupabase();
-    };
-    window.saveOrder = async function(){
-      return await saveOrderToSupabase();
-    };
-    window.createOrder = async function(){
-      return await saveOrderToSupabase();
-    };
-
-    const buttons = Array.from(document.querySelectorAll("button"));
-    const createBtn = buttons.find(b => (b.textContent || "").includes("إنشاء طلب") || (b.textContent || "").includes("تسجيل الطلب") || (b.textContent || "").includes("حفظ الطلب"));
-    if(createBtn){
-      createBtn.type = "button";
-      createBtn.addEventListener("click", async function(ev){
-        ev.preventDefault();
-        ev.stopPropagation();
-        await saveOrderToSupabase();
-      }, true);
-    }
-  });
+  window.saveOrderToSupabaseOnly = saveToSupabase;
 })();
 </script>
 
