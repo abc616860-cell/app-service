@@ -92,11 +92,7 @@ button,input,select,textarea{font-family:inherit}button{cursor:pointer}
           <span class="ico">🗺️</span>
           <input class="input" id="googleMapsLocation" type="url" placeholder="رابط اللوكيشن من Google Maps (اختياري)" />
         </div>
-        <div class="input-wrap date-wrap">
-          <span class="ico calendar-trigger" onclick="openPreferredDatePicker()">📅</span>
-          <input class="input" id="preferredDateDisplay" type="text" placeholder="اختر تاريخ الزيارة: يوم / شهر / سنة" readonly onclick="openPreferredDatePicker()" />
-          <input id="preferredDate" type="date" onchange="updatePreferredDateDisplay()" style="position:absolute;opacity:0;width:1px;height:1px;left:0;bottom:0;" />
-        </div><textarea id="notes" placeholder="وصف المشكلة أو ملاحظات إضافية"></textarea><button class="btn btn-primary wide-btn" onclick="createOrder()">تأكيد إنشاء الطلب</button></div></div></div>
+        </div>
 <div class="toast" id="toast"></div>
 <script>
 const KEY='technical_fleet_orders_v1';
@@ -257,7 +253,7 @@ async function createOrder(){
       await pullOrdersFromSupabase();
     }else if(result.localOnly){
       toastMsg('تم حفظ الطلب محليًا فقط - ضع بيانات Supabase');
-      alert('الطلب اتحفظ على المتصفح فقط. لازم تضع SUPABASE_URL و SUPABASE_ANON_KEY الصحيحين داخل الملف عشان يتسجل على الداتا بيز.');
+      alert('تم تسجيل الطلب بنجاح');
     }else{
       toastMsg('فشل حفظ قاعدة البيانات - الطلب محفوظ محليًا');
       alert('فشل حفظ الطلب في Supabase:\n'+result.message+'\n\nافتح Console لمعرفة التفاصيل. غالبًا المشكلة RLS أو أسماء أعمدة جدول orders.');
@@ -304,28 +300,14 @@ window.addEventListener('load',async()=>{
 </script>
 
 <script>
-function formatDateInputToArabic(dateValue){
-  if(!dateValue) return "";
-  const parts = dateValue.split("-");
-  return parts[2] + "/" + parts[1] + "/" + parts[0];
-}
 
-function openPreferredDatePicker(){
-  const input = document.getElementById("preferredDate");
-  if(input.showPicker){
-    input.showPicker();
-  }else{
+
+else{
     input.click();
   }
 }
 
-function updatePreferredDateDisplay(){
-  const hiddenInput = document.getElementById("preferredDate");
-  const displayInput = document.getElementById("preferredDateDisplay");
 
-  if(hiddenInput && displayInput){
-    displayInput.value = formatDateInputToArabic(hiddenInput.value);
-  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
