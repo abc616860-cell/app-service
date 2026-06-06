@@ -87,30 +87,215 @@ button,input,select,textarea{font-family:inherit}button{cursor:pointer}
   </div>
   <div class="copy">جميع الحقوق محفوظة © 2026 الأسطول الفني للصيانة المتكاملة</div>
 </footer>
-<div class="modal" id="requestModal"><div class="modal-card"><div class="modal-head"><h2>بيانات الطلب</h2><button class="close" onclick="requestModal.classList.remove('open')">×</button></div><div class="form-grid"><input id="clientName" class="input" placeholder="اسم العميل"><input id="clientPhone" class="input" placeholder="رقم الجوال"><input id="address" class="input" placeholder="العنوان بالتفصيل"><textarea id="notes" placeholder="وصف المشكلة أو ملاحظات إضافية"></textarea><button class="btn btn-primary wide-btn" onclick="createOrder()">تأكيد إنشاء الطلب</button></div></div></div>
+<div class="modal" id="requestModal"><div class="modal-card"><div class="modal-head"><h2>بيانات الطلب</h2><button class="close" onclick="requestModal.classList.remove('open')">×</button></div><div class="form-grid"><input id="clientName" class="input" placeholder="اسم العميل"><input id="clientPhone" class="input" placeholder="رقم الجوال"><input id="address" class="input" placeholder="العنوان بالتفصيل">
+        <div class="input-wrap">
+          <span class="ico">🗺️</span>
+          <input class="input" id="googleMapsLocation" type="url" placeholder="رابط اللوكيشن من Google Maps (اختياري)" />
+        </div><textarea id="notes" placeholder="وصف المشكلة أو ملاحظات إضافية"></textarea><button class="btn btn-primary wide-btn" onclick="createOrder()">تأكيد إنشاء الطلب</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const KEY='technical_fleet_orders_v1';
+
+/*
+  مهم جدًا:
+  ضع بيانات Supabase الصحيحة هنا، وإلا الطلب سيتحفظ محليًا فقط ولن يظهر في قاعدة البيانات.
+  Project URL مثال: https://xxxxxxxx.supabase.co
+  anon public key من: Project Settings > API
+*/
 const SUPABASE_URL='ضع_رابط_SUPABASE_PROJECT_URL_هنا';
 const SUPABASE_ANON_KEY='ضع_SUPABASE_ANON_KEY_هنا';
-const SB_READY=SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length>40 && window.supabase;
+
+const SB_READY=SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length>80 && window.supabase;
 const sb=SB_READY?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}}
-function save(v){localStorage.setItem(KEY,JSON.stringify(v));syncOrdersToSupabase(v)}
-function toastMsg(t){toast.textContent=t;toast.style.display='block';setTimeout(()=>toast.style.display='none',2600)}
+function saveLocal(v){localStorage.setItem(KEY,JSON.stringify(v||[]))}
+function toastMsg(t){toast.textContent=t;toast.style.display='block';setTimeout(()=>toast.style.display='none',3200)}
 function cleanId(v){return String(v||'').replace('#','').trim()}
 function nextId(){let arr=load().map(x=>parseInt(cleanId(x.id))).filter(Boolean);return String((arr.length?Math.max(...arr):1000)+1)}
 function pickService(s){service.value=s;location.hash='order';toastMsg('تم اختيار الخدمة: '+s)}
 function openRequestModal(){if(!service.value){toastMsg('اختر نوع الخدمة أولاً');return}requestModal.classList.add('open')}
-function normalizeOrderForDb(x){return {id:cleanId(x.id),name:x.name||'',phone:x.phone||'',service:x.service||'',city:x.city||'',address:x.address||'',notes:x.notes||'',price:Number(x.price||0),status:x.status||'جديدة',date:x.date||new Date().toISOString().slice(0,10),time:x.time||'',tech_id:x.techId||null,payment_status:x.paymentStatus||null,rating:x.rating||null,rating_note:x.ratingNote||null,before_photos:x.beforePhotos||[],after_photos:x.afterPhotos||[],raw:x,updated_at:new Date().toISOString()}}
-function dbOrderToLocal(r){let x=r.raw||{};return {...x,id:r.id,name:r.name,phone:r.phone,service:r.service,city:r.city,address:r.address,notes:r.notes,price:Number(r.price||0),status:r.status,date:r.date,time:r.time,techId:r.tech_id,paymentStatus:r.payment_status,rating:r.rating,ratingNote:r.rating_note,beforePhotos:r.before_photos||[],afterPhotos:r.after_photos||[]}}
-async function syncOrdersToSupabase(arr){if(!sb||window.__pullingTechnicalFleet)return;try{await sb.from('orders').upsert((arr||[]).map(normalizeOrderForDb),{onConflict:'id'})}catch(e){console.warn('Technical Fleet sync failed',e);toastMsg('تم الحفظ محليًا - راجع إعدادات Supabase')}}
-async function pullOrdersFromSupabase(){if(!sb)return;try{window.__pullingTechnicalFleet=true;const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});if(error)throw error;if(data){localStorage.setItem(KEY,JSON.stringify(data.map(dbOrderToLocal)))}}catch(e){console.warn('Technical Fleet pull failed',e)}finally{window.__pullingTechnicalFleet=false}}
-async function createOrder(){let name=clientName.value.trim(),phone=clientPhone.value.trim();if(!name||!phone){toastMsg('اكتب اسم العميل ورقم الجوال');return}await pullOrdersFromSupabase();let order={id:nextId(),service:service.value,date:date.value||new Date().toISOString().slice(0,10),time:'',city:city.value||'غير محدد',name,phone,address:address.value,notes:notes.value,status:'جديدة',price:0,created:new Date().toLocaleString('ar-SA')};let arr=load();arr.unshift(order);save(arr);requestModal.classList.remove('open');trackId.value=order.id;trackPhone.value=phone;toastMsg('تم إنشاء الطلب رقم '+order.id+' وسيظهر في لوحة التحكم');await pullOrdersFromSupabase();trackOrder();document.querySelector('.result').scrollIntoView({behavior:'smooth'});}
+
+function normalizeOrderForDb(x){
+  return {
+    id:cleanId(x.id),
+    name:x.name||'',
+    phone:x.phone||'',
+    service:x.service||'',
+    city:x.city||'',
+    address:x.address||'',
+    notes:x.notes||'',
+    price:Number(x.price||0),
+    status:x.status||'جديدة',
+    date:x.date||new Date().toISOString().slice(0,10),
+    time:x.time||'',
+    tech_id:x.techId||null,
+    payment_status:x.paymentStatus||'غير مدفوعة',
+    rating:x.rating||null,
+    rating_note:x.ratingNote||null,
+    before_photos:x.beforePhotos||[],
+    after_photos:x.afterPhotos||[],
+    raw:x,
+    created_at:x.createdAt||new Date().toISOString(),
+    updated_at:new Date().toISOString()
+  }
+}
+
+function dbOrderToLocal(r){
+  let x=r.raw||{};
+  return {
+    ...x,
+    id:r.id||x.id,
+    name:r.name||r.customer_name||x.name||'',
+    phone:r.phone||r.customer_phone||x.phone||'',
+    service:r.service||r.service_type||x.service||'',
+    city:r.city||x.city||'',
+    address:r.address||x.address||'',
+    notes:r.notes||x.notes||'',
+    price:Number(r.price||x.price||0),
+    status:r.status||r.order_status||x.status||'جديدة',
+    date:r.date||x.date||'',
+    time:r.time||x.time||'',
+    techId:r.tech_id||x.techId||null,
+    paymentStatus:r.payment_status||x.paymentStatus||'غير مدفوعة',
+    rating:r.rating||x.rating||null,
+    ratingNote:r.rating_note||x.ratingNote||null,
+    beforePhotos:r.before_photos||x.beforePhotos||[],
+    afterPhotos:r.after_photos||x.afterPhotos||[]
+  }
+}
+
+async function insertOrderToSupabase(order){
+  if(!sb){
+    console.warn('Supabase غير مفعل: ضع SUPABASE_URL و SUPABASE_ANON_KEY داخل الملف');
+    return {ok:false, localOnly:true, message:'ضع بيانات Supabase داخل الملف أولاً'};
+  }
+
+  const fullPayload=normalizeOrderForDb(order);
+  const simplePayload={
+    customer_name:order.name||'',
+    customer_phone:order.phone||'',
+    service_type:order.service||'',
+    city:order.city||'',
+    address:order.address||'',
+    notes:order.notes||'',
+    order_status:order.status||'جديدة'
+  };
+
+  let tries=[fullPayload, simplePayload];
+  let lastError=null;
+
+  for(const payload of tries){
+    const {data,error}=await sb.from('orders').insert([payload]).select().single();
+    if(!error){return {ok:true,data}};
+    lastError=error;
+    console.error('Supabase insert error:',error);
+  }
+
+  return {ok:false,error:lastError,message:lastError?.message||'فشل غير معروف في حفظ الطلب'};
+}
+
+async function pullOrdersFromSupabase(){
+  if(!sb)return;
+  try{
+    window.__pullingTechnicalFleet=true;
+    const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});
+    if(error)throw error;
+    if(Array.isArray(data))saveLocal(data.map(dbOrderToLocal));
+  }catch(e){
+    console.warn('Technical Fleet pull failed',e);
+  }finally{
+    window.__pullingTechnicalFleet=false;
+  }
+}
+
+async function createOrder(){
+  let name=clientName.value.trim();
+  let phone=clientPhone.value.trim();
+  if(!service.value){toastMsg('اختر نوع الخدمة أولاً');return}
+  if(!name||!phone){toastMsg('اكتب اسم العميل ورقم الجوال');return}
+
+  let order={
+    id:nextId(),
+    service:service.value,
+    date:date.value||new Date().toISOString().slice(0,10),
+    time:'',
+    city:city.value||'غير محدد',
+    name,
+    phone,
+    address:address.value.trim(),
+    notes:notes.value.trim(),
+    status:'جديدة',
+    price:0,
+    paymentStatus:'غير مدفوعة',
+    created:new Date().toLocaleString('ar-SA'),
+    createdAt:new Date().toISOString()
+  };
+
+  const btn=document.querySelector('#requestModal .wide-btn');
+  const oldText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='جاري حفظ الطلب...';
+
+  try{
+    const result=await insertOrderToSupabase(order);
+    let arr=load().filter(x=>cleanId(x.id)!==cleanId(order.id));
+    arr.unshift(order);
+    saveLocal(arr);
+
+    requestModal.classList.remove('open');
+    trackId.value=order.id;
+    trackPhone.value=phone;
+
+    if(result.ok){
+      toastMsg('تم تسجيل الطلب على قاعدة البيانات رقم '+order.id);
+      await pullOrdersFromSupabase();
+    }else if(result.localOnly){
+      toastMsg('تم حفظ الطلب محليًا فقط - ضع بيانات Supabase');
+      alert('الطلب اتحفظ على المتصفح فقط. لازم تضع SUPABASE_URL و SUPABASE_ANON_KEY الصحيحين داخل الملف عشان يتسجل على الداتا بيز.');
+    }else{
+      toastMsg('فشل حفظ قاعدة البيانات - الطلب محفوظ محليًا');
+      alert('فشل حفظ الطلب في Supabase:\n'+result.message+'\n\nافتح Console لمعرفة التفاصيل. غالبًا المشكلة RLS أو أسماء أعمدة جدول orders.');
+    }
+
+    await trackOrder();
+    document.querySelector('.result').scrollIntoView({behavior:'smooth'});
+  }catch(e){
+    console.error(e);
+    toastMsg('حدث خطأ أثناء حفظ الطلب');
+    alert('حدث خطأ أثناء حفظ الطلب: '+(e.message||e));
+  }finally{
+    btn.disabled=false;
+    btn.textContent=oldText;
+  }
+}
+
 function clientStageStatus(st){if(st==='مكتملة'||st==='تم التسليم')return 'تم التسليم'; if(st==='قيد التنفيذ'||st==='قيد الصيانة'||st==='قيد الفحص')return 'قيد الصيانة'; if(st==='متأخرة')return 'قيد الصيانة'; return 'استلام الطلب'}
 function stageIndex(st){return ['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'].indexOf(clientStageStatus(st))}
-async function trackOrder(){await pullOrdersFromSupabase();let id=cleanId(trackId.value),phone=trackPhone.value.trim();let o=load().find(x=>cleanId(x.id)==id&&String(x.phone||'').trim()==phone);if(!o){resultBox.className='result open';resultBox.innerHTML='<h2>لم يتم العثور على الطلب</h2><p style="color:#63738a;font-weight:800;margin-top:8px">تأكد من رقم الطلب ورقم الجوال أو أنشئ طلب جديد.</p>';return}let stages=['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'];let si=stageIndex(o.status);if(si<0)si=0;resultBox.className='result open';resultBox.innerHTML=`<h2 style="font-size:28px">حالة طلبك الحالية</h2><div class="steps">${stages.map((s,i)=>`<div class="step ${i<si?'done':''} ${i==si?'active':''}"><div class="dot">${['📋','🔎','🔧','📦','✓'][i]}</div><b>${s}</b><small>${i<=si?(o.date||'-'):'-'}</small></div>`).join('')}</div><div style="margin-top:25px;border:1px solid #d7e7fb;border-radius:14px;padding:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px"><div><b>رقم الطلب</b><p>#${o.id}</p></div><div><b>الخدمة</b><p>${o.service||'-'}</p></div><div><b>التاريخ</b><p>${o.date||'-'}</p></div><div><b>الموقع</b><p>${o.city||'-'}</p></div></div>`;}
-window.addEventListener('load',async()=>{if(sb){await pullOrdersFromSupabase();sb.channel('technical-fleet-client-live').on('postgres_changes',{event:'*',schema:'public',table:'orders'},async()=>{await pullOrdersFromSupabase();if(trackId.value&&trackPhone.value)trackOrder()}).subscribe()}else{console.warn('ضع بيانات Supabase في أعلى الملف لتفعيل الربط الحقيقي')}});
+
+async function trackOrder(){
+  await pullOrdersFromSupabase();
+  let id=cleanId(trackId.value),phone=trackPhone.value.trim();
+  let o=load().find(x=>cleanId(x.id)==id&&String(x.phone||'').trim()==phone);
+  if(!o){
+    resultBox.className='result open';
+    resultBox.innerHTML='<h2>لم يتم العثور على الطلب</h2><p style="color:#63738a;font-weight:800;margin-top:8px">تأكد من رقم الطلب ورقم الجوال أو أنشئ طلب جديد.</p>';
+    return;
+  }
+  let stages=['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'];
+  let si=stageIndex(o.status);if(si<0)si=0;
+  resultBox.className='result open';
+  resultBox.innerHTML=`<h2 style="font-size:28px">حالة طلبك الحالية</h2><div class="steps">${stages.map((s,i)=>`<div class="step ${i<si?'done':''} ${i==si?'active':''}"><div class="dot">${['📋','🔎','🔧','📦','✓'][i]}</div><b>${s}</b><small>${i<=si?(o.date||'-'):'-'}</small></div>`).join('')}</div><div style="margin-top:25px;border:1px solid #d7e7fb;border-radius:14px;padding:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px"><div><b>رقم الطلب</b><p>#${o.id}</p></div><div><b>الخدمة</b><p>${o.service||'-'}</p></div><div><b>التاريخ</b><p>${o.date||'-'}</p></div><div><b>الموقع</b><p>${o.city||'-'}</p></div></div>`;
+}
+
+window.addEventListener('load',async()=>{
+  if(sb){
+    await pullOrdersFromSupabase();
+    sb.channel('technical-fleet-client-live').on('postgres_changes',{event:'*',schema:'public',table:'orders'},async()=>{await pullOrdersFromSupabase();if(trackId.value&&trackPhone.value)trackOrder()}).subscribe();
+  }else{
+    console.warn('ضع بيانات Supabase في أعلى الملف لتفعيل الربط الحقيقي');
+  }
+});
 </script>
 </body>
 </html>
