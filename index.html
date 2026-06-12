@@ -79,8 +79,14 @@ function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){
 function saveLocal(v){localStorage.setItem(KEY,JSON.stringify(v||[]))}
 function toastMsg(t,type=''){const el=$('toast');el.textContent=t;el.className='toast '+type;el.style.display='block';clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>el.style.display='none',3500)}
 function cleanId(v){return String(v||'').replace('#','').trim()}
+function normalizePhone(v){return String(v||'').replace(/\D/g,'')}
 function today(){return new Date().toISOString().slice(0,10)}
-function nextId(){let arr=load().map(x=>parseInt(cleanId(x.id))).filter(Boolean);return String((arr.length?Math.max(...arr):1000)+1)}
+function nextId(){
+  const arr=load().map(x=>parseInt(cleanId(x.id))).filter(Boolean);
+  const localNext=(arr.length?Math.max(...arr):1000)+1;
+  const timePart=parseInt(String(Date.now()).slice(-6));
+  return String(Math.max(localNext,timePart));
+}
 function getSelectedServices(){return Array.from(document.querySelectorAll('.service-chip.active')).map(b=>b.dataset.service).filter(Boolean)}
 function updateServiceUI(){const selected=getSelectedServices();const count=$('serviceCount');const list=$('selectedServicesList');if(count)count.textContent=selected.length?selected.length+' خدمة مختارة':'لم يتم اختيار خدمات';if(list)list.innerHTML=selected.map(s=>`<span>${s}</span>`).join('')}
 function toggleService(btn){btn.classList.toggle('active');updateServiceUI()}
@@ -124,16 +130,65 @@ function setupDatePicker(id){
 }
 
 function openRequestModal(){if(!getSelectedServices().length){toastMsg('اختر خدمة واحدة على الأقل','error');return}validateFutureDate($('date'));validateFutureDate($('preferredDate'));if(!$('date').value)$('date').value=today();if(!$('preferredDate').value)$('preferredDate').value=$('date').value;validateFutureDate($('preferredDate'));$('requestModal').classList.add('open')}
-function phoneOk(v){return String(v||'').replace(/\s/g,'').length>=8}
+function phoneOk(v){const p=normalizePhone(v);return /^05\d{8}$/.test(p)||/^9665\d{8}$/.test(p)}
 function normalizeOrderForDb(order){const id=cleanId(order.id);return {id,name:order.name||'',phone:order.phone||'',service:order.service||'',city:order.city||'',address:order.address||'',notes:order.notes||'',price:Number(order.price||0),status:order.status||'جديدة',date:order.date||today(),time:order.time||'',tech_id:order.techId||order.tech_id||null,payment_status:order.paymentStatus||order.payment_status||'غير مدفوعة',rating:order.rating||null,rating_note:order.ratingNote||order.rating_note||null,before_photos:order.beforePhotos||order.before_photos||[],after_photos:order.afterPhotos||order.after_photos||[],raw:{...order,google_maps_location:order.googleMapsLocation||''},updated_at:new Date().toISOString()}}
 function normalizeOrderForCustomerSchema(order){return {id:cleanId(order.id),customer_name:order.name||'',customer_phone:order.phone||'',service_type:order.service||'',city:order.city||'',address:order.address||'',notes:[order.notes,order.googleMapsLocation?'Google Maps: '+order.googleMapsLocation:''].filter(Boolean).join('\n'),order_status:order.status||'جديدة',date:order.date||today(),raw:order,updated_at:new Date().toISOString()}}
 function dbOrderToLocal(r){const raw=r.raw||{};return {...raw,id:r.id||raw.id,name:r.name||r.customer_name||raw.name||'',phone:r.phone||r.customer_phone||raw.phone||'',service:r.service||r.service_type||raw.service||'',city:r.city||raw.city||'',address:r.address||raw.address||'',notes:r.notes||raw.notes||'',price:Number(r.price||raw.price||0),status:r.status||r.order_status||raw.status||'جديدة',date:r.date||raw.date||'',time:r.time||raw.time||'',techId:r.tech_id||raw.techId||null,paymentStatus:r.payment_status||raw.paymentStatus||'غير مدفوعة',rating:r.rating||raw.rating||null,ratingNote:r.rating_note||raw.ratingNote||null,beforePhotos:r.before_photos||raw.beforePhotos||[],afterPhotos:r.after_photos||raw.afterPhotos||[]}}
 async function saveOrderToSupabase(order){if(!sb)return {ok:false,localOnly:true,message:'Supabase غير متصل'};const variants=[normalizeOrderForDb(order),normalizeOrderForCustomerSchema(order)];let lastError=null;for(const payload of variants){const {data,error}=await sb.from('orders').upsert([payload],{onConflict:'id'}).select().single();if(!error)return {ok:true,data};lastError=error;console.warn('Save variant failed:',error.message,payload)}return {ok:false,error:lastError,message:lastError?.message||'فشل حفظ الطلب'}}
 async function pullOrdersFromSupabase(){if(!sb)return load();try{const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false}).limit(300);if(error)throw error;if(Array.isArray(data)){const normalized=data.map(dbOrderToLocal);const merged=[...normalized];for(const local of load()){if(!merged.some(x=>cleanId(x.id)===cleanId(local.id)))merged.push(local)}saveLocal(merged);return merged}}catch(e){console.warn('Pull failed:',e.message||e)}return load()}
-async function createOrder(){const name=$('clientName').value.trim();const phone=$('clientPhone').value.trim();const selectedServices=getSelectedServices();if(!selectedServices.length){toastMsg('اختر خدمة واحدة على الأقل','error');return}if(!name){toastMsg('اكتب اسم العميل','error');return}if(!phoneOk(phone)){toastMsg('اكتب رقم جوال صحيح','error');return}if(!$('city').value){toastMsg('اختر المدينة من القائمة','error');return}validateFutureDate($('preferredDate'));validateFutureDate($('date'));const chosenDate=$('preferredDate').value||$('date').value||today();if(chosenDate<today()){toastMsg('لا يمكن إنشاء طلب بتاريخ سابق','error');return}const serviceText=selectedServices.join('، ');const order={id:nextId(),service:serviceText,services:selectedServices,date:chosenDate,time:'',city:$('city').value,name,phone,address:$('address').value.trim(),googleMapsLocation:$('googleMapsLocation').value.trim(),notes:$('notes').value.trim(),status:'جديدة',price:0,paymentStatus:'غير مدفوعة',created:new Date().toLocaleString('ar-SA'),createdAt:new Date().toISOString()};const btn=$('submitOrderBtn');const old=btn.textContent;btn.disabled=true;btn.textContent='جاري حفظ الطلب...';try{let arr=load().filter(x=>cleanId(x.id)!==cleanId(order.id));arr.unshift(order);saveLocal(arr);const result=await saveOrderToSupabase(order);$('requestModal').classList.remove('open');$('trackId').value=order.id;$('trackPhone').value=phone;if(result.ok){toastMsg('تم تسجيل الطلب رقم '+order.id+' وظهر في لوحة الأدمن');await pullOrdersFromSupabase()}else if(result.localOnly){toastMsg('تم حفظ الطلب محليًا فقط','error')}else{toastMsg('الطلب محفوظ محليًا لكن فشل رفعه للداتا بيز','error');alert('فشل حفظ الطلب في قاعدة البيانات:\n'+result.message)}await trackOrder();$('resultBox').scrollIntoView({behavior:'smooth'});['clientName','clientPhone','address','googleMapsLocation','notes'].forEach(id=>$(id).value='');$('city').selectedIndex=0;clearSelectedServices()}catch(e){console.error(e);toastMsg('حدث خطأ أثناء حفظ الطلب','error');alert('حدث خطأ أثناء حفظ الطلب: '+(e.message||e))}finally{btn.disabled=false;btn.textContent=old}}
+async function createOrder(){
+  const name=$('clientName').value.trim();
+  const phoneRaw=$('clientPhone').value.trim();
+  const phone=normalizePhone(phoneRaw).replace(/^966/,'0');
+  const selectedServices=getSelectedServices();
+  if(!selectedServices.length){toastMsg('اختر خدمة واحدة على الأقل','error');return}
+  if(!name){toastMsg('اكتب اسم العميل','error');return}
+  if(!phoneOk(phoneRaw)){toastMsg('اكتب رقم جوال سعودي صحيح يبدأ بـ 05','error');return}
+  if(!$('city').value){toastMsg('اختر المدينة من القائمة','error');return}
+  validateFutureDate($('preferredDate'));
+  validateFutureDate($('date'));
+  const chosenDate=$('preferredDate').value||$('date').value||today();
+  if(chosenDate<today()){toastMsg('لا يمكن إنشاء طلب بتاريخ سابق','error');return}
+  const serviceText=selectedServices.join('، ');
+  const order={id:nextId(),service:serviceText,services:selectedServices,date:chosenDate,time:'',city:$('city').value,name,phone,address:$('address').value.trim(),googleMapsLocation:$('googleMapsLocation').value.trim(),notes:$('notes').value.trim(),status:'جديدة',price:0,paymentStatus:'غير مدفوعة',created:new Date().toLocaleString('ar-SA'),createdAt:new Date().toISOString()};
+  const btn=$('submitOrderBtn');
+  const old=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='جاري حفظ الطلب...';
+  try{
+    const result=await saveOrderToSupabase(order);
+    let arr=load().filter(x=>cleanId(x.id)!==cleanId(order.id));
+    arr.unshift(order);
+    saveLocal(arr);
+    $('requestModal').classList.remove('open');
+    $('trackId').value=order.id;
+    $('trackPhone').value=phone;
+    if(result.ok){
+      toastMsg('تم تسجيل الطلب رقم '+order.id+' وظهر في لوحة الأدمن');
+      await pullOrdersFromSupabase();
+    }else if(result.localOnly){
+      toastMsg('تم حفظ الطلب محليًا فقط لأن قاعدة البيانات غير متصلة','error');
+    }else{
+      toastMsg('الطلب محفوظ محليًا لكن فشل رفعه للداتا بيز','error');
+      alert('فشل حفظ الطلب في قاعدة البيانات:\n'+result.message+'\n\nراجع أعمدة جدول orders و RLS.');
+    }
+    await trackOrder();
+    $('resultBox').scrollIntoView({behavior:'smooth'});
+    ['clientName','clientPhone','address','googleMapsLocation','notes'].forEach(id=>$(id).value='');
+    $('city').selectedIndex=0;
+    clearSelectedServices();
+  }catch(e){
+    console.error(e);
+    toastMsg('حدث خطأ أثناء حفظ الطلب','error');
+    alert('حدث خطأ أثناء حفظ الطلب: '+(e.message||e));
+  }finally{
+    btn.disabled=false;
+    btn.textContent=old;
+  }
+}
 function clientStageStatus(st){if(['مكتملة','تم التسليم','مدفوعة'].includes(st))return 'تم التسليم';if(['جاهز للاستلام','جاهزة للاستلام'].includes(st))return 'جاهز للاستلام';if(['قيد التنفيذ','قيد الصيانة','جاري العمل'].includes(st))return 'قيد الصيانة';if(['قيد الفحص','تم الإسناد'].includes(st))return 'قيد الفحص';return 'استلام الطلب'}
 function stageIndex(st){const stages=['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'];return Math.max(0,stages.indexOf(clientStageStatus(st)))}
-async function trackOrder(){const id=cleanId($('trackId').value);const phone=$('trackPhone').value.trim();if(!id||!phone){toastMsg('اكتب رقم الطلب ورقم الجوال','error');return}const orders=await pullOrdersFromSupabase();let o=orders.find(x=>cleanId(x.id)===id&&String(x.phone||'').trim()===phone);if(!o){$('resultBox').className='result open';$('resultBox').innerHTML='<h2>لم يتم العثور على الطلب</h2><p style="color:#63738a;font-weight:800;margin-top:8px">تأكد من رقم الطلب ورقم الجوال أو أنشئ طلب جديد.</p>';return}const stages=['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'];const si=stageIndex(o.status);$('resultBox').className='result open';$('resultBox').innerHTML=`<h2 style="font-size:28px">حالة طلبك الحالية</h2><div class="steps">${stages.map((s,i)=>`<div class="step ${i<si?'done':''} ${i===si?'active':''}"><div class="dot">${['📋','🔎','🔧','📦','✓'][i]}</div><b>${s}</b><small>${i<=si?(o.date||'-'):'-'}</small></div>`).join('')}</div><div class="order-summary"><div><b>رقم الطلب</b><p>#${o.id}</p></div><div><b>الخدمة</b><p>${o.service||'-'}</p></div><div><b>الحالة</b><p>${o.status||'-'}</p></div><div><b>الموقع</b><p>${o.city||'-'}</p></div></div>`}
+async function trackOrder(){const id=cleanId($('trackId').value);const phone=$('trackPhone').value.trim();if(!id||!phone){toastMsg('اكتب رقم الطلب ورقم الجوال','error');return}const orders=await pullOrdersFromSupabase();let o=orders.find(x=>cleanId(x.id)===id&&normalizePhone(x.phone)===normalizePhone(phone));if(!o){$('resultBox').className='result open';$('resultBox').innerHTML='<h2>لم يتم العثور على الطلب</h2><p style="color:#63738a;font-weight:800;margin-top:8px">تأكد من رقم الطلب ورقم الجوال أو أنشئ طلب جديد.</p>';return}const stages=['استلام الطلب','قيد الفحص','قيد الصيانة','جاهز للاستلام','تم التسليم'];const si=stageIndex(o.status);$('resultBox').className='result open';$('resultBox').innerHTML=`<h2 style="font-size:28px">حالة طلبك الحالية</h2><div class="steps">${stages.map((s,i)=>`<div class="step ${i<si?'done':''} ${i===si?'active':''}"><div class="dot">${['📋','🔎','🔧','📦','✓'][i]}</div><b>${s}</b><small>${i<=si?(o.date||'-'):'-'}</small></div>`).join('')}</div><div class="order-summary"><div><b>رقم الطلب</b><p>#${o.id}</p></div><div><b>الخدمة</b><p>${o.service||'-'}</p></div><div><b>الحالة</b><p>${o.status||'-'}</p></div><div><b>الموقع</b><p>${o.city||'-'}</p></div></div>`}
 async function init(){setupDatePicker('date');setupDatePicker('preferredDate');const state=$('dbState');if(sb){state.textContent='قاعدة البيانات: متصلة';state.className='db-state ok';await pullOrdersFromSupabase();sb.channel('alostol-client-live-fixed').on('postgres_changes',{event:'*',schema:'public',table:'orders'},async()=>{await pullOrdersFromSupabase();if($('trackId').value&&$('trackPhone').value)trackOrder()}).subscribe()}else{state.textContent='قاعدة البيانات: غير متصلة';state.className='db-state off'}}
 window.addEventListener('load',init);
 </script>
