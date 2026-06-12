@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>الأسطول الفني - طلب صيانة</title>
+<title>الاسطول الفني - طلب صيانة</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#031d36;--navy2:#062b50;--blue:#096bff;--sky:#eaf4ff;--text:#0b1f3a;--muted:#63738a;--line:#d7e7fb;--card:#fff;--bg:#f7fbff;--green:#16b364;--orange:#f59e0b;--red:#ef4444;--shadow:0 16px 45px rgba(15,50,90,.10)}
@@ -29,7 +29,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator{cursor:pointer;opaci
 </head>
 <body>
 <header class="header">
-  <div class="logo"><span class="logo-mark">🔧</span><div>الأسطول الفني<small>للخدمات المتكاملة</small><span id="dbState" class="db-state off">قاعدة البيانات: جاري الفحص...</span></div></div>
+  <div class="logo"><span class="logo-mark">🔧</span><div>الاسطول الفني<small>للخدمات المتكاملة</small><span id="dbState" class="db-state off">قاعدة البيانات: جاري الفحص...</span></div></div>
   <nav class="nav"><a class="active" href="#home">الرئيسية</a><a href="#services">الخدمات</a><a href="#track">تتبع الطلب</a><a href="#contact">تواصل معنا</a></nav>
   <div class="auth"><button class="btn btn-outline" onclick="document.getElementById('track').scrollIntoView({behavior:'smooth'})">تتبع طلب</button><button class="btn btn-primary" onclick="openRequestModal()">طلب خدمة</button></div>
 </header>
@@ -66,7 +66,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator{cursor:pointer;opaci
   <section class="result" id="resultBox"></section>
   <section class="benefits"><div class="benefit"><div class="bicon">🎧</div><div>دعم فني متاح<br>على مدار الساعة</div></div><div class="benefit"><div class="bicon">٪</div><div>أسعار تنافسية<br>وأفضل العروض</div></div><div class="benefit"><div class="bicon">☆</div><div>تقييمات عملائنا<br>تثق بنا</div></div><div class="benefit"><div class="bicon">👥</div><div>متابعة كاملة<br>للطلبات</div></div></section>
 </main>
-<footer class="footer" id="contact"><div class="foot-grid"><div><div class="logo"><span class="logo-mark">🔧</span><div>الأسطول الفني<small>للخدمات المتكاملة</small></div></div><p>نقدم لك أفضل الخدمات المنزلية بأعلى جودة وبأسعار موثوقة.</p></div><div><h3>خدماتنا</h3><ul><li>صيانة المكيفات</li><li>صيانة الغسالات</li><li>صيانة الثلاجات</li><li>سباكة وكشف تسربات</li><li>كهرباء وتمديدات</li></ul></div><div><h3>معلومات</h3><ul><li>عن الأسطول الفني</li><li>الأسئلة الشائعة</li><li>سياسة الخصوصية</li><li>الشروط والأحكام</li></ul></div><div><h3>تواصل معنا</h3><p>📞 050 123 4567<br>✉️ info@fixora.com<br>📍 المملكة العربية السعودية<br>🕒 السبت - الخميس: 8 ص - 10 م</p></div></div><div class="copy">جميع الحقوق محفوظة © 2026 الأسطول الفني للصيانة المتكاملة</div></footer>
+<footer class="footer" id="contact"><div class="foot-grid"><div><div class="logo"><span class="logo-mark">🔧</span><div>الاسطول الفني<small>للخدمات المتكاملة</small></div></div><p>نقدم لك أفضل الخدمات المنزلية بأعلى جودة وبأسعار موثوقة.</p></div><div><h3>خدماتنا</h3><ul><li>صيانة المكيفات</li><li>صيانة الغسالات</li><li>صيانة الثلاجات</li><li>سباكة وكشف تسربات</li><li>كهرباء وتمديدات</li></ul></div><div><h3>معلومات</h3><ul><li>عن الاسطول الفني</li><li>الأسئلة الشائعة</li><li>سياسة الخصوصية</li><li>الشروط والأحكام</li></ul></div><div><h3>تواصل معنا</h3><p>📞 050 123 4567<br>✉️ info@fixora.com<br>📍 المملكة العربية السعودية<br>🕒 السبت - الخميس: 8 ص - 10 م</p></div></div><div class="copy">جميع الحقوق محفوظة © 2026 الاسطول الفني للصيانة المتكاملة</div></footer>
 <div class="modal" id="requestModal"><div class="modal-card"><div class="modal-head"><h2>بيانات الطلب</h2><button class="close" onclick="requestModal.classList.remove('open')">×</button></div><div class="form-grid"><input id="clientName" class="input" placeholder="اسم العميل"><input id="clientPhone" class="input" placeholder="رقم الجوال"><input id="address" class="input" placeholder="العنوان بالتفصيل"><div class="input-wrap"><span class="ico">🗺️</span><input class="input" id="googleMapsLocation" type="url" placeholder="رابط اللوكيشن من Google Maps اختياري"></div><div class="input-wrap"><span class="ico">📅</span><input id="preferredDate" class="input" type="date" required readonly inputmode="none" onclick="openNativeCalendar(this)" onfocus="openNativeCalendar(this)" onkeydown="return false" onchange="validateFutureDate(this)"></div><textarea id="notes" placeholder="وصف المشكلة أو ملاحظات إضافية"></textarea><div class="note">سيتم حفظ الطلب في قاعدة البيانات وظهوره مباشرة في لوحة الأدمن، مع نسخة احتياطية محلية على نفس الجهاز.</div><button id="submitOrderBtn" class="btn btn-primary wide-btn" onclick="createOrder()">تأكيد إنشاء الطلب</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
